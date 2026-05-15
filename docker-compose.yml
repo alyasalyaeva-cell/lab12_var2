@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/db
+    depends_on:
+      db: { condition: service_healthy }
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d db"]
+      interval: 5s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  migrations:
+    build: .
+    command: alembic upgrade head
+    depends_on:
+      db: { condition: service_healthy }
+volumes:
+  postgres_data:
